@@ -129,12 +129,16 @@ function normalizeIpv4MappedAddress(address: ParsedIpAddress): ParsedIpAddress {
   return address.toIPv4Address();
 }
 
-export function parseCanonicalIpAddress(raw: string | undefined): ParsedIpAddress | undefined {
+function normalizeIpParseInput(raw: string | undefined): string | undefined {
   const trimmed = raw?.trim();
   if (!trimmed) {
     return undefined;
   }
-  const normalized = stripIpv6Brackets(trimmed);
+  return stripIpv6Brackets(trimmed);
+}
+
+export function parseCanonicalIpAddress(raw: string | undefined): ParsedIpAddress | undefined {
+  const normalized = normalizeIpParseInput(raw);
   if (!normalized) {
     return undefined;
   }
@@ -151,11 +155,7 @@ export function parseCanonicalIpAddress(raw: string | undefined): ParsedIpAddres
 }
 
 export function parseLooseIpAddress(raw: string | undefined): ParsedIpAddress | undefined {
-  const trimmed = raw?.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-  const normalized = stripIpv6Brackets(trimmed);
+  const normalized = normalizeIpParseInput(raw);
   if (!normalized) {
     return undefined;
   }
