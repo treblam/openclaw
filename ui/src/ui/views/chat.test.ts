@@ -251,6 +251,63 @@ describe("chat view", () => {
     nowSpy.mockRestore();
   });
 
+  it("uses fresh totalTokens for the context warning notice", () => {
+    const container = document.createElement("div");
+    render(
+      renderChat(
+        createProps({
+          sessions: {
+            ...createSessions(),
+            sessions: [
+              {
+                key: "main",
+                kind: "direct",
+                updatedAt: Date.now(),
+                inputTokens: 500_000,
+                totalTokens: 90_000,
+                totalTokensFresh: true,
+                contextTokens: 100_000,
+              },
+            ],
+          },
+        }),
+      ),
+      container,
+    );
+
+    const notice = container.querySelector(".context-notice");
+    expect(notice).not.toBeNull();
+    expect(notice?.textContent).toContain("90% context used");
+    expect(notice?.textContent).toContain("90k / 100k");
+  });
+
+  it("hides the context warning when token totals are not fresh", () => {
+    const container = document.createElement("div");
+    render(
+      renderChat(
+        createProps({
+          sessions: {
+            ...createSessions(),
+            sessions: [
+              {
+                key: "main",
+                kind: "direct",
+                updatedAt: Date.now(),
+                inputTokens: 500_000,
+                totalTokens: 90_000,
+                totalTokensFresh: false,
+                contextTokens: 100_000,
+              },
+            ],
+          },
+        }),
+      ),
+      container,
+    );
+
+    expect(container.querySelector(".context-notice")).toBeNull();
+  });
+
   it("renders fallback-cleared indicator shortly after transition", () => {
     const container = document.createElement("div");
     const nowSpy = vi.spyOn(Date, "now").mockReturnValue(1_000);

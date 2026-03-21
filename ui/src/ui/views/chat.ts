@@ -254,8 +254,21 @@ function renderContextNotice(
   session: GatewaySessionRow | undefined,
   defaultContextTokens: number | null,
 ) {
-  const used = session?.inputTokens ?? 0;
-  const limit = session?.contextTokens ?? defaultContextTokens ?? 0;
+  const total = session?.totalTokens;
+  const limitValue = session?.contextTokens ?? defaultContextTokens ?? 0;
+  if (
+    session?.totalTokensFresh !== true ||
+    typeof total !== "number" ||
+    !Number.isFinite(total) ||
+    typeof limitValue !== "number" ||
+    !Number.isFinite(limitValue) ||
+    total <= 0 ||
+    limitValue <= 0
+  ) {
+    return nothing;
+  }
+  const limit = Math.max(0, Math.floor(limitValue));
+  const used = Math.max(0, Math.min(Math.floor(total), limit));
   if (!used || !limit) {
     return nothing;
   }

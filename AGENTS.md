@@ -162,6 +162,13 @@
 - If `git branch -d/-D <branch>` is policy-blocked, delete the local ref directly: `git update-ref -d refs/heads/<branch>`.
 - Bulk PR close/reopen safety: if a close action would affect more than 5 PRs, first ask for explicit user confirmation with the exact PR count and target scope/query.
 
+## Private Changes Ledger
+
+- Record every non-upstream code change in `PRIVATE_CHANGES.md` before handoff or commit. This includes local hotfixes, fork-only behavior changes, and manual ports/cherry-picks of upstream PRs that have not merged yet.
+- Each ledger entry must include the problem being solved, the upstream issue/PR URL when one exists, the touched repo paths, the local commit SHA(s) when available, and what must be reviewed during the next upstream sync or tag upgrade.
+- Keep `PRIVATE_CHANGES.md` limited to active local-only changes. Remove the entry as soon as the local patch is dropped, no longer needed, or an official upstream implementation replaces it.
+- During any upgrade that rebases onto upstream or merges an official upstream tag, review `PRIVATE_CHANGES.md` entry-by-entry. Confirm on upstream GitHub what fixed the issue, then confirm the chosen tag actually contains that fix before retiring the local patch. Prefer the official upstream implementation when it covers the same problem, then update or delete the ledger entry as part of that upgrade.
+
 ## GitHub Search (`gh`)
 
 - Prefer targeted keyword search before proposing new work or duplicating fixes.
