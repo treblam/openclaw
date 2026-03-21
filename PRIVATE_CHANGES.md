@@ -43,7 +43,7 @@ Upgrade rule:
 - Summary: The Control UI context warning used accumulated `inputTokens` instead of fresh `totalTokens`, which overstated actual context usage and could produce bogus `100% context used` warnings after long runs or compaction.
 - Why local: The bug is confirmed in this checkout, and this repo now carries a local UI fix so the warning only uses fresh token snapshots.
 - Upstream reference: https://github.com/openclaw/openclaw/issues/45230, https://github.com/openclaw/openclaw/issues/45513, https://github.com/openclaw/openclaw/pull/45335, https://github.com/openclaw/openclaw/pull/45648
-- Local commits: `uncommitted`
+- Local commits: `142ce81b1a`
 - Local touchpoints: `ui/src/ui/types.ts`, `ui/src/ui/views/chat.ts`, `ui/src/ui/views/chat.test.ts`
 - Upgrade review: On each official tag upgrade, confirm whether the target upstream tag already uses fresh `totalTokens` / `totalTokensFresh` semantics for the chat context warning. If it does, prefer the official implementation and drop this local patch rather than carrying two competing versions of the notice logic.
 - Retirement plan: `drop during merge`
