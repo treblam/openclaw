@@ -40,6 +40,11 @@ export function isGatewayCliClient(client?: GatewayClientInfoLike | null): boole
   return normalizeGatewayClientMode(client?.mode) === GATEWAY_CLIENT_MODES.CLI;
 }
 
+export function isGatewayDiagnosticClient(client?: GatewayClientInfoLike | null): boolean {
+  const mode = normalizeGatewayClientMode(client?.mode);
+  return mode === GATEWAY_CLIENT_MODES.CLI || mode === GATEWAY_CLIENT_MODES.PROBE;
+}
+
 export function isInternalMessageChannel(raw?: string | null): raw is InternalMessageChannel {
   return normalizeMessageChannel(raw) === INTERNAL_MESSAGE_CHANNEL;
 }

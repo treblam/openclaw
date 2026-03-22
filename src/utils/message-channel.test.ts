@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ChannelPlugin } from "../channels/plugins/types.js";
 import { setActivePluginRegistry } from "../plugins/runtime.js";
 import { createMSTeamsTestPluginBase, createTestRegistry } from "../test-utils/channel-plugins.js";
-import { resolveGatewayMessageChannel } from "./message-channel.js";
+import {
+  GATEWAY_CLIENT_MODES,
+  isGatewayDiagnosticClient,
+  resolveGatewayMessageChannel,
+} from "./message-channel.js";
 
 const emptyRegistry = createTestRegistry([]);
 const msteamsPlugin: ChannelPlugin = {
@@ -30,5 +34,11 @@ describe("message-channel", () => {
       createTestRegistry([{ pluginId: "msteams", plugin: msteamsPlugin, source: "test" }]),
     );
     expect(resolveGatewayMessageChannel("teams")).toBe("msteams");
+  });
+
+  it("treats cli and probe clients as diagnostic clients", () => {
+    expect(isGatewayDiagnosticClient({ mode: GATEWAY_CLIENT_MODES.CLI })).toBe(true);
+    expect(isGatewayDiagnosticClient({ mode: GATEWAY_CLIENT_MODES.PROBE })).toBe(true);
+    expect(isGatewayDiagnosticClient({ mode: GATEWAY_CLIENT_MODES.UI })).toBe(false);
   });
 });

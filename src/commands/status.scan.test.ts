@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getAgentLocalStatuses: vi.fn(),
   getStatusSummary: vi.fn(),
   buildGatewayConnectionDetails: vi.fn(),
+  callGateway: vi.fn(),
   probeGateway: vi.fn(),
   resolveGatewayProbeAuthResolution: vi.fn(),
 }));
@@ -50,7 +51,7 @@ vi.mock("../infra/tailscale.js", () => ({
 
 vi.mock("../gateway/call.js", () => ({
   buildGatewayConnectionDetails: mocks.buildGatewayConnectionDetails,
-  callGateway: vi.fn(),
+  callGateway: mocks.callGateway,
 }));
 
 vi.mock("../gateway/probe.js", () => ({
@@ -73,6 +74,86 @@ vi.mock("../process/exec.js", () => ({
 import { scanStatus } from "./status.scan.js";
 
 describe("scanStatus", () => {
+  it("keeps gateway summary probes on a short timeout budget", async () => {
+    mocks.readBestEffortConfig.mockResolvedValue({
+      marker: "source",
+      session: {},
+      plugins: { enabled: false },
+      gateway: {},
+    });
+    mocks.resolveCommandSecretRefsViaGateway.mockResolvedValue({
+      resolvedConfig: {
+        marker: "resolved",
+        session: {},
+        plugins: { enabled: false },
+        gateway: {},
+      },
+      diagnostics: [],
+    });
+    mocks.getUpdateCheckResult.mockResolvedValue({
+      installKind: "git",
+      git: null,
+      registry: null,
+    });
+    mocks.getAgentLocalStatuses.mockResolvedValue({
+      defaultId: "main",
+      agents: [],
+    });
+    mocks.getStatusSummary.mockResolvedValue({
+      linkChannel: { linked: false },
+      sessions: { count: 0, paths: [], defaults: {}, recent: [] },
+    });
+    mocks.buildGatewayConnectionDetails.mockReturnValue({
+      url: "ws://127.0.0.1:18789",
+      urlSource: "default",
+    });
+    mocks.resolveGatewayProbeAuthResolution.mockReturnValue({
+      auth: {},
+      warning: undefined,
+    });
+    mocks.probeGateway.mockResolvedValue({
+      ok: true,
+      url: "ws://127.0.0.1:18789",
+      connectLatencyMs: 25,
+      error: null,
+      close: null,
+      health: null,
+      status: null,
+      presence: [],
+      configSnapshot: null,
+    });
+    mocks.callGateway.mockResolvedValue({
+      channels: [],
+    });
+    mocks.buildChannelsTable.mockResolvedValue({
+      rows: [],
+      details: [],
+    });
+
+    await scanStatus({ json: true }, {} as never);
+
+    expect(mocks.probeGateway).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timeoutMs: 2_500,
+        details: {
+          health: false,
+          status: false,
+          presence: true,
+          configSnapshot: false,
+        },
+      }),
+    );
+    expect(mocks.callGateway).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: "channels.status",
+        timeoutMs: 2_500,
+        params: expect.objectContaining({
+          timeoutMs: 8_000,
+        }),
+      }),
+    );
+  });
+
   it("passes sourceConfig into buildChannelsTable for summary-mode status output", async () => {
     mocks.readBestEffortConfig.mockResolvedValue({
       marker: "source",

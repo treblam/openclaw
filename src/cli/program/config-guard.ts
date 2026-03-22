@@ -1,4 +1,3 @@
-import { loadAndMaybeMigrateDoctorConfig } from "../../commands/doctor-config-flow.js";
 import { readConfigFileSnapshot } from "../../config/config.js";
 import { formatConfigIssueLines } from "../../config/issue-format.js";
 import type { RuntimeEnv } from "../../runtime.js";
@@ -47,7 +46,7 @@ export async function ensureConfigReady(params: {
   if (!didRunDoctorConfigFlow && shouldMigrateStateFromPath(commandPath)) {
     didRunDoctorConfigFlow = true;
     const runDoctorConfigFlow = async () =>
-      loadAndMaybeMigrateDoctorConfig({
+      (await import("../../commands/doctor-config-flow.js")).loadAndMaybeMigrateDoctorConfig({
         options: { nonInteractive: true },
         confirm: async () => false,
       });

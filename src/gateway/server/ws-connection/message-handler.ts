@@ -22,7 +22,7 @@ import { loadVoiceWakeConfig } from "../../../infra/voicewake.js";
 import { rawDataToString } from "../../../infra/ws.js";
 import type { createSubsystemLogger } from "../../../logging/subsystem.js";
 import { roleScopesAllow } from "../../../shared/operator-scope-compat.js";
-import { isGatewayCliClient, isWebchatClient } from "../../../utils/message-channel.js";
+import { isGatewayDiagnosticClient, isWebchatClient } from "../../../utils/message-channel.js";
 import { resolveRuntimeServiceVersion } from "../../../version.js";
 import type { AuthRateLimiter } from "../../auth-rate-limit.js";
 import type { GatewayAuthResult, ResolvedGatewayAuth } from "../../auth.js";
@@ -894,7 +894,7 @@ export function attachGatewayWsMessageHandler(params: {
           connectParams.commands = filtered;
         }
 
-        const shouldTrackPresence = !isGatewayCliClient(connectParams.client);
+        const shouldTrackPresence = !isGatewayDiagnosticClient(connectParams.client);
         const clientId = connectParams.client.id;
         const instanceId = connectParams.client.instanceId;
         const presenceKey = shouldTrackPresence ? (device?.id ?? instanceId ?? connId) : undefined;
@@ -1047,9 +1047,11 @@ export function attachGatewayWsMessageHandler(params: {
         });
 
         send({ type: "res", id: frame.id, ok: true, payload: helloOk });
-        void refreshGatewayHealthSnapshot({ probe: true }).catch((err) =>
-          logHealth.error(`post-connect health refresh failed: ${formatError(err)}`),
-        );
+        if (!isGatewayDiagnosticClient(connectParams.client)) {
+          void refreshGatewayHealthSnapshot({ probe: true }).catch((err) =>
+            logHealth.error(`post-connect health refresh failed: ${formatError(err)}`),
+          );
+        }
         return;
       }
 

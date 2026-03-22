@@ -46,6 +46,11 @@ type GatewayProbeSnapshot = {
   gatewayProbe: Awaited<ReturnType<typeof probeGateway>> | null;
 };
 
+// Keep status responsive when the gateway is slow or unreachable.
+// These budgets only gate summary diagnostics, not long-running channel probes elsewhere.
+const STATUS_GATEWAY_PROBE_TIMEOUT_MS = 2_500;
+const STATUS_GATEWAY_PROBE_TIMEOUT_ALL_MS = 5_000;
+
 function deferResult<T>(promise: Promise<T>): Promise<DeferredResult<T>> {
   return promise.then(
     (value) => ({ ok: true, value }),
@@ -89,7 +94,16 @@ async function resolveGatewayProbeSnapshot(params: {
     : await probeGateway({
         url: gatewayConnection.url,
         auth: gatewayProbeAuthResolution.auth,
-        timeoutMs: Math.min(params.opts.all ? 5000 : 2500, params.opts.timeoutMs ?? 10_000),
+        timeoutMs: Math.min(
+          params.opts.all ? STATUS_GATEWAY_PROBE_TIMEOUT_ALL_MS : STATUS_GATEWAY_PROBE_TIMEOUT_MS,
+          params.opts.timeoutMs ?? 10_000,
+        ),
+        details: {
+          health: false,
+          status: false,
+          presence: true,
+          configSnapshot: false,
+        },
       }).catch(() => null);
   if (gatewayProbeAuthWarning && gatewayProbe?.ok === false) {
     gatewayProbe.error = gatewayProbe.error
@@ -122,7 +136,10 @@ async function resolveChannelsStatus(params: {
       probe: false,
       timeoutMs: Math.min(8000, params.opts.timeoutMs ?? 10_000),
     },
-    timeoutMs: Math.min(params.opts.all ? 5000 : 2500, params.opts.timeoutMs ?? 10_000),
+    timeoutMs: Math.min(
+      params.opts.all ? STATUS_GATEWAY_PROBE_TIMEOUT_ALL_MS : STATUS_GATEWAY_PROBE_TIMEOUT_MS,
+      params.opts.timeoutMs ?? 10_000,
+    ),
   }).catch(() => null);
 }
 

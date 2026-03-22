@@ -29,18 +29,25 @@ export type GatewayProbeResult = {
   configSnapshot: unknown;
 };
 
+type GatewayProbeDetails = {
+  health?: boolean;
+  status?: boolean;
+  presence?: boolean;
+  configSnapshot?: boolean;
+};
+
 export async function probeGateway(opts: {
   url: string;
   auth?: GatewayProbeAuth;
   timeoutMs: number;
   includeDetails?: boolean;
+  details?: GatewayProbeDetails;
 }): Promise<GatewayProbeResult> {
   const startedAt = Date.now();
   const instanceId = randomUUID();
   let connectLatencyMs: number | null = null;
   let connectError: string | null = null;
   let close: GatewayProbeClose | null = null;
-
   const disableDeviceIdentity = (() => {
     try {
       return isLoopbackHost(new URL(opts.url).hostname);
@@ -48,6 +55,20 @@ export async function probeGateway(opts: {
       return false;
     }
   })();
+  const detailFlags =
+    opts.includeDetails === false
+      ? {
+          health: false,
+          status: false,
+          presence: false,
+          configSnapshot: false,
+        }
+      : {
+          health: opts.details?.health !== false,
+          status: opts.details?.status !== false,
+          presence: opts.details?.presence !== false,
+          configSnapshot: opts.details?.configSnapshot !== false,
+        };
 
   return await new Promise<GatewayProbeResult>((resolve) => {
     let settled = false;
@@ -94,10 +115,10 @@ export async function probeGateway(opts: {
         }
         try {
           const [health, status, presence, configSnapshot] = await Promise.all([
-            client.request("health"),
-            client.request("status"),
-            client.request("system-presence"),
-            client.request("config.get", {}),
+            detailFlags.health ? client.request("health") : Promise.resolve(null),
+            detailFlags.status ? client.request("status") : Promise.resolve(null),
+            detailFlags.presence ? client.request("system-presence") : Promise.resolve(null),
+            detailFlags.configSnapshot ? client.request("config.get", {}) : Promise.resolve(null),
           ]);
           settle({
             ok: true,

@@ -81,4 +81,24 @@ describe("probeGateway", () => {
     expect(result.ok).toBe(true);
     expect(gatewayClientState.requests).toEqual([]);
   });
+
+  it("requests only the selected detail RPCs", async () => {
+    const result = await probeGateway({
+      url: "ws://127.0.0.1:18789",
+      timeoutMs: 1_000,
+      details: {
+        health: false,
+        status: false,
+        presence: true,
+        configSnapshot: false,
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(gatewayClientState.requests).toEqual(["system-presence"]);
+    expect(result.presence).toEqual([]);
+    expect(result.health).toBeNull();
+    expect(result.status).toBeNull();
+    expect(result.configSnapshot).toBeNull();
+  });
 });
