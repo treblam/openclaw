@@ -30,7 +30,7 @@ Upgrade rule:
 - Summary: Reduced the work done by CLI/probe diagnostic clients so `openclaw status` style checks stay responsive, and changed gateway protocol validators plus doctor-config loading to lazy initialization instead of eagerly compiling/loading heavy modules up front.
 - Why local: The live system was showing sluggish diagnostic behavior, and this checkout now carries a local performance/latency fix that is not yet tracked as an adopted upstream release change.
 - Upstream reference: `none`
-- Local commits: `uncommitted`
+- Local commits: `64c9a576ba`
 - Local touchpoints: `src/cli/program/config-guard.ts`, `src/cli/route.ts`, `src/commands/status.scan.test.ts`, `src/commands/status.scan.ts`, `src/gateway/client.ts`, `src/gateway/probe.test.ts`, `src/gateway/probe.ts`, `src/gateway/protocol/index.ts`, `src/gateway/server/ws-connection/message-handler.ts`, `src/utils/message-channel.test.ts`, `src/utils/message-channel.ts`
 - Upgrade review: On each official tag upgrade, check whether upstream now lazy-loads gateway protocol validators and keeps diagnostic status/probe clients from triggering extra presence/health work or broad RPC fan-out. If the chosen tag contains equivalent behavior, prefer the official implementation and retire this entry.
 - Retirement plan: `drop during merge`
